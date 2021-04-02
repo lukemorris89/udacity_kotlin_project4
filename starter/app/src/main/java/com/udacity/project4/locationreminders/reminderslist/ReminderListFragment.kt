@@ -16,10 +16,11 @@ class ReminderListFragment : BaseFragment() {
     //use Koin to retrieve the ViewModel instance
     override val _viewModel: RemindersListViewModel by viewModel()
     private lateinit var binding: FragmentRemindersBinding
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding =
             DataBindingUtil.inflate(
                 inflater,
@@ -68,6 +69,10 @@ class ReminderListFragment : BaseFragment() {
         binding.reminderssRecyclerView.setup(adapter)
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.main_menu, menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.logout -> {
@@ -76,12 +81,6 @@ class ReminderListFragment : BaseFragment() {
         }
         return super.onOptionsItemSelected(item)
 
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
-//        display logout as menu item
-        inflater.inflate(R.menu.main_menu, menu)
     }
 
 }
