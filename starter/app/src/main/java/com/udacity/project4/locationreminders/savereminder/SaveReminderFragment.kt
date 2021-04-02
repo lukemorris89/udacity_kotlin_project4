@@ -249,7 +249,7 @@ class SaveReminderFragment : BaseFragment() {
         val geofencingRequest = buildGeofenceRequest(geofence)
         geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)
             .addOnSuccessListener {
-                Log.d(TAG, "Geofence Added")
+                Log.d(TAG, "Geofence added to GeofencingClient")
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, e.message.toString())
