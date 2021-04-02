@@ -42,6 +42,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var locationManager: LocationManager
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var marker: Marker? = null
+    private var moveMarkerSnackbarShown = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -117,6 +118,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             )
 
             binding.createReminderButton.visibility = View.VISIBLE
+
+            if (!moveMarkerSnackbarShown) {
+                Snackbar.make(
+                    binding.root,
+                    getString(R.string.move_marker),
+                    Snackbar.LENGTH_LONG
+                ).show()
+                moveMarkerSnackbarShown = true
+            }
         }
     }
 
@@ -239,7 +249,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             .setPositiveButton("OK") { _, _ ->
                 findNavController().popBackStack()
             }
-        builder.create()
+            .setCancelable(false)
+        val dialog = builder.create()
+        dialog.show()
     }
 
     companion object {
