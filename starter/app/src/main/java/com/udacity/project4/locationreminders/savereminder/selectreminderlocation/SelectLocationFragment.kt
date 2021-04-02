@@ -19,13 +19,11 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MapStyleOptions
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
+import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
@@ -41,7 +39,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var map: GoogleMap
     private lateinit var locationManager: LocationManager
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var startSnackbar: Snackbar
     private var marker: Marker? = null
+    private var customMarkerSnackbarShown = false
     private var moveMarkerSnackbarShown = false
 
     override fun onCreateView(
@@ -117,7 +117,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     .snippet(snippet)
             )
 
+            customMarkerSnackbarShown = true
+
+            binding.locationNameEt.visibility = View.VISIBLE
+            binding.locationNameEt.setText("")
+
             binding.createReminderButton.visibility = View.VISIBLE
+
 
             if (!moveMarkerSnackbarShown) {
                 Snackbar.make(
@@ -132,21 +138,51 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private fun setPoiClick(map: GoogleMap) {
         map.setOnPoiClickListener { poi ->
-            val poiMarker = map.addMarker(
+            marker?.remove()
+
+            if (startSnackbar.isShown) {
+                startSnackbar.dismiss()
+            }
+
+            marker = map.addMarker(
                 MarkerOptions()
                     .position(poi.latLng)
                     .title(poi.name)
             )
-            poiMarker.showInfoWindow()
+            marker.let {
+                it?.showInfoWindow()
+            }
+
+            if (!customMarkerSnackbarShown) {
+                Snackbar.make(
+                    binding.root,
+                    getString(R.string.custom_marker),
+                    Snackbar.LENGTH_LONG
+                ).show()
+                customMarkerSnackbarShown = true
+            }
+
+            binding.locationNameEt.visibility = View.GONE
+
+            binding.createReminderButton.visibility = View.VISIBLE
         }
     }
 
     private fun onLocationSelected() {
         val position = marker?.position
+        val name = if (marker?.title == getString(R.string.dropped_pin))
+            binding.locationNameEt.text.toString() else marker?.title
+
+        _viewModel.selectedPOI.value = PointOfInterest(
+            position?.let { LatLng(it.latitude, position.longitude) },
+            null,
+            name
+        )
         _viewModel.latitude.value = position?.latitude
         _viewModel.longitude.value = position?.longitude
+        _viewModel.reminderSelectedLocationStr.value = name
 
-        findNavController().navigateUp()
+        _viewModel.navigationCommand.postValue(NavigationCommand.Back)
     }
 
 
@@ -219,11 +255,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                         ), START_CAMERA_ZOOM
                     )
                 )
-                Snackbar.make(
+                startSnackbar = Snackbar.make(
                     binding.root,
                     getString(R.string.select_poi),
-                    Snackbar.LENGTH_LONG
-                ).show()
+                    Snackbar.LENGTH_INDEFINITE
+                )
+                startSnackbar.show()
             }
         }
     }

@@ -22,7 +22,7 @@
     <string name="location_required_error">Location services must be enabled to use the app</string>
     <string name="permission_denied_explanation">You need to grant location permission in order to select the location.</string>
     <string name="settings">Settings</string>
-    <string name="select_poi">Long-press a location to select a point of interest</string>
+    <string name="select_poi">Select a point of interest to get started</string>
     <string name="geofence_entered">Geofence Entered</string>
     <string name="channel_name">GeofenceStatus</string>
     <string name="notification_channel_description">Geofence status notification</string>
@@ -43,4 +43,6 @@
     <string name="enter_name_for_this_location">Enter name for this location</string>
     <string name="create_reminder">Create reminder</string>
     <string name="move_marker">To change marker, long press a different location.</string>
+    <string name="enter_location_name_optional">Enter location name (optional)</string>
+    <string name="custom_marker">To create a custom marker, long press a location.</string>
 </resources>
