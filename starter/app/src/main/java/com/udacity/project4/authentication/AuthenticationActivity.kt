@@ -1,8 +1,21 @@
 package com.udacity.project4.authentication
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
+import com.firebase.ui.auth.AuthUI
+import com.firebase.ui.auth.IdpResponse
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.R
+import com.udacity.project4.databinding.ActivityAuthenticationBinding
+import com.udacity.project4.locationreminders.RemindersActivity
+
 
 /**
  * This class should be the starting point of the app, It asks the users to sign in / register, and redirects the
@@ -10,15 +23,82 @@ import com.udacity.project4.R
  */
 class AuthenticationActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityAuthenticationBinding
+    private lateinit var googleSignInClient: GoogleSignInClient
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_authentication)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_authentication)
+
+        binding.loginButton.setOnClickListener {
+            launchSignInFlow()
+        }
+
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val account = GoogleSignIn.getLastSignedInAccount(this)
+        if (account != null) {
+            signIn()
+        }
+    }
+
+    private fun signIn() {
+        val intent = Intent(this, RemindersActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun launchSignInFlow() {
+        val providers = arrayListOf(
+            AuthUI.IdpConfig.EmailBuilder().build(), AuthUI.IdpConfig.GoogleBuilder().build()
+        )
+
+        startActivityForResult(
+            AuthUI.getInstance()
+                .createSignInIntentBuilder()
+                .setAvailableProviders(providers)
+                .build(),
+            SIGN_IN_REQUEST_CODE
+        )
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == SIGN_IN_REQUEST_CODE) {
+            val response = IdpResponse.fromResultIntent(data)
+            if (resultCode == Activity.RESULT_OK) {
+                // User successfully signed in
+                signIn()
+                Log.i(
+                    TAG,
+                    "Successfully signed in user ${FirebaseAuth.getInstance().currentUser?.displayName}!"
+                )
+            } else {
+                // Sign in failed. If response is null the user canceled the
+                // sign-in flow using the back button. Otherwise check
+                // response.getError().getErrorCode() and handle the error.
+                Log.i(TAG, "Sign in unsuccessful ${response?.error?.errorCode}")
+            }
+        }
+    }
 //         TODO: Implement the create account and sign in using FirebaseUI, use sign in using email and sign in using Google
 
 //          TODO: If the user was authenticated, send him to RemindersActivity
 
 //          TODO: a bonus is to customize the sign in flow to look nice using :
-        //https://github.com/firebase/FirebaseUI-Android/blob/master/auth/README.md#custom-layout
+    //https://github.com/firebase/FirebaseUI-Android/blob/master/auth/README.md#custom-layout
 
+
+    companion object {
+        private const val TAG = "AuthenticationActivity"
+        private const val SIGN_IN_REQUEST_CODE = 66
     }
 }
+
