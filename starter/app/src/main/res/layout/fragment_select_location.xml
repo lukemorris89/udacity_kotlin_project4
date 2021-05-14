@@ -22,6 +22,19 @@
             tools:layout_editor_absoluteX="-48dp"
             tools:layout_editor_absoluteY="-104dp" />
 
+        <EditText
+            android:id="@+id/location_name_et"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="48dp"
+            android:layout_marginEnd="48dp"
+            android:padding="8dp"
+            android:background="@color/white"
+            android:hint="@string/enter_location_name_optional"
+            android:ellipsize="end"
+            app:layout_constraintBottom_toTopOf="@id/create_reminder_button"
+            android:visibility="gone"/>
+
         <Button
             android:id="@+id/create_reminder_button"
             android:layout_width="match_parent"
@@ -35,8 +48,8 @@
             android:layout_marginBottom="64dp"
             android:backgroundTint="@color/colorAccent"
             android:textColor="@color/white"
+            android:textSize="18sp"
             android:visibility="gone"/>
-
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -1,12 +1,20 @@
 package com.udacity.project4.locationreminders.reminderslist
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.*
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Observer
+import androidx.navigation.fragment.findNavController
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.firebase.ui.auth.AuthUI
 import com.udacity.project4.R
+import com.udacity.project4.authentication.AuthenticationActivity
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentRemindersBinding
+import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import com.udacity.project4.utils.setTitle
 import com.udacity.project4.utils.setup
@@ -31,7 +39,14 @@ class ReminderListFragment : BaseFragment() {
         setDisplayHomeAsUpEnabled(false)
         setTitle(getString(R.string.app_name))
 
-        binding.refreshLayout.setOnRefreshListener { _viewModel.loadReminders() }
+        binding.refreshLayout.setOnRefreshListener(SwipeRefreshLayout.OnRefreshListener {
+            _viewModel.loadReminders(true)
+
+        })
+
+        _viewModel.showLoading.observe(viewLifecycleOwner, Observer{
+            binding.refreshLayout.isRefreshing = it
+        })
 
         return binding.root
     }
@@ -71,7 +86,7 @@ class ReminderListFragment : BaseFragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.logout -> {
-//                TODO: add the logout implementation
+                signOut()
             }
         }
         return super.onOptionsItemSelected(item)
@@ -82,6 +97,16 @@ class ReminderListFragment : BaseFragment() {
         super.onCreateOptionsMenu(menu, inflater)
 //        display logout as menu item
         inflater.inflate(R.menu.main_menu, menu)
+    }
+
+    private fun signOut() {
+        AuthUI.getInstance()
+            .signOut(requireContext())
+            .addOnCompleteListener {
+                val intent = Intent(requireContext(), AuthenticationActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+            }
     }
 
 }

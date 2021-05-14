@@ -7,6 +7,7 @@ import com.udacity.project4.base.BaseViewModel
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
+import com.udacity.project4.utils.EspressoIdlingResource
 import kotlinx.coroutines.launch
 
 class RemindersListViewModel(
@@ -20,7 +21,7 @@ class RemindersListViewModel(
      * Get all the reminders from the DataSource and add them to the remindersList to be shown on the UI,
      * or show error if any
      */
-    fun loadReminders() {
+    fun loadReminders(manualRefresh: Boolean = false) {
         showLoading.value = true
         viewModelScope.launch {
             //interacting with the dataSource has to be through a coroutine
@@ -41,6 +42,13 @@ class RemindersListViewModel(
                         )
                     })
                     remindersList.value = dataList
+                    if (manualRefresh) {
+                        if (dataList.isEmpty()) {
+                            showSnackBar.value = "No reminders found"
+                        } else {
+                            showToast.value = "Reminders refreshed"
+                        }
+                    }
                 }
                 is Result.Error ->
                     showSnackBar.value = result.message

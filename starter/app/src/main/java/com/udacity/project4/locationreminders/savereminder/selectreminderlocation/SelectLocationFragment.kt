@@ -1,31 +1,24 @@
 package com.udacity.project4.locationreminders.savereminder.selectreminderlocation
 
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.content.Context
-import android.content.pm.PackageManager
 import android.location.Criteria
 import android.location.LocationManager
 import android.os.Bundle
 import android.view.*
-import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
-import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MapStyleOptions
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
+import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
@@ -41,7 +34,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var map: GoogleMap
     private lateinit var locationManager: LocationManager
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var startSnackbar: Snackbar
     private var marker: Marker? = null
+    private var customMarkerSnackbarShown = false
     private var moveMarkerSnackbarShown = false
 
     override fun onCreateView(
@@ -92,7 +87,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 )
         )
 
-        enableMyLocation()
+        map.isMyLocationEnabled = true
         initMapLocation()
 
         setMapLongClick(map)
@@ -109,14 +104,16 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 latLng.latitude,
                 latLng.longitude
             )
-
             marker = map.addMarker(
                 MarkerOptions()
                     .position(latLng)
                     .title(getString(R.string.dropped_pin))
                     .snippet(snippet)
             )
+            customMarkerSnackbarShown = true
 
+            binding.locationNameEt.visibility = View.VISIBLE
+            binding.locationNameEt.setText("")
             binding.createReminderButton.visibility = View.VISIBLE
 
             if (!moveMarkerSnackbarShown) {
@@ -132,23 +129,52 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private fun setPoiClick(map: GoogleMap) {
         map.setOnPoiClickListener { poi ->
-            val poiMarker = map.addMarker(
+            marker?.remove()
+
+            if (startSnackbar.isShown) {
+                startSnackbar.dismiss()
+            }
+
+            marker = map.addMarker(
                 MarkerOptions()
                     .position(poi.latLng)
                     .title(poi.name)
             )
-            poiMarker.showInfoWindow()
+            marker.let {
+                it?.showInfoWindow()
+            }
+
+            if (!customMarkerSnackbarShown) {
+                Snackbar.make(
+                    binding.root,
+                    getString(R.string.custom_marker),
+                    Snackbar.LENGTH_LONG
+                ).show()
+                customMarkerSnackbarShown = true
+            }
+
+            binding.locationNameEt.visibility = View.GONE
+
+            binding.createReminderButton.visibility = View.VISIBLE
         }
     }
 
     private fun onLocationSelected() {
         val position = marker?.position
+        val name = if (marker?.title == getString(R.string.dropped_pin))
+            binding.locationNameEt.text.toString() else marker?.title
+
+        _viewModel.selectedPOI.value = PointOfInterest(
+            position?.let { LatLng(it.latitude, position.longitude) },
+            null,
+            name
+        )
         _viewModel.latitude.value = position?.latitude
         _viewModel.longitude.value = position?.longitude
+        _viewModel.reminderSelectedLocationStr.value = name
 
-        findNavController().navigateUp()
+        _viewModel.navigationCommand.postValue(NavigationCommand.Back)
     }
-
 
     override fun onCreateOptionsMenu(
         menu: Menu,
@@ -177,29 +203,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         else -> super.onOptionsItemSelected(item)
     }
 
-    private fun isPermissionGranted(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            context!!,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun enableMyLocation() {
-        if (isPermissionGranted()) {
-            map.isMyLocationEnabled = true
-            initMapLocation()
-        } else {
-            requestPermissions(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ),
-                REQUEST_LOCATION_PERMISSION
-            )
-        }
-    }
-
     @SuppressLint("MissingPermission")
     private fun initMapLocation() {
         if (map.isMyLocationEnabled) {
@@ -219,43 +222,18 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                         ), START_CAMERA_ZOOM
                     )
                 )
-                Snackbar.make(
+                startSnackbar = Snackbar.make(
                     binding.root,
                     getString(R.string.select_poi),
-                    Snackbar.LENGTH_LONG
-                ).show()
+                    Snackbar.LENGTH_INDEFINITE
+                )
+                startSnackbar.show()
             }
         }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        if (requestCode == REQUEST_LOCATION_PERMISSION) {
-            if (grantResults.isNotEmpty() && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                enableMyLocation()
-            } else {
-                showDeclinedPermissionDialog()
-            }
-        }
-    }
-
-    private fun showDeclinedPermissionDialog() {
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle(R.string.location_required_error)
-            .setMessage(getString(R.string.permission_denied_explanation))
-            .setPositiveButton("OK") { _, _ ->
-                findNavController().popBackStack()
-            }
-            .setCancelable(false)
-        val dialog = builder.create()
-        dialog.show()
     }
 
     companion object {
-        private const val REQUEST_LOCATION_PERMISSION = 1
+
         private const val START_CAMERA_ZOOM = 17.0f
         private const val TAG = "SelectLocationFragment"
     }
