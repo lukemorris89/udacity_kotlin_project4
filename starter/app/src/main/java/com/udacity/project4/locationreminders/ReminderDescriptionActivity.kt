@@ -23,7 +23,7 @@ class ReminderDescriptionActivity : AppCompatActivity() {
         )
         if (intent != null) {
             val reminder =
-                intent.extras?.getSerializable(EXTRA_ReminderDataItem) as ReminderDataItem
+                intent.extras?.getParcelable<ReminderDataItem>(EXTRA_ReminderDataItem)
             binding.reminderDataItem = reminder
         }
     }

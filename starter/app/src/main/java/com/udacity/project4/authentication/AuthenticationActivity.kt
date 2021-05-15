@@ -32,9 +32,9 @@ class AuthenticationActivity : AppCompatActivity() {
 
         if (auth.currentUser != null) {
             // User is signed in (getCurrentUser() will be null if not signed in)
-            val intent = Intent(this, RemindersActivity::class.java);
-            startActivity(intent);
-            finish();
+            val intent = Intent(this, RemindersActivity::class.java)
+            startActivity(intent)
+            finish()
         }
 
         binding.loginButton.setOnClickListener {
