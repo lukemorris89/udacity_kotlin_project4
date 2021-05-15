@@ -64,8 +64,4 @@ class RemindersActivityTest :
             repository.deleteAllReminders()
         }
     }
-
-
-//    TODO: add End to End testing to the app
-
 }
