@@ -15,6 +15,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.stopKoin
 import org.robolectric.annotation.Config
 
 @ExperimentalCoroutinesApi
@@ -33,6 +34,7 @@ class SaveReminderViewModelTest {
 
     @Before
     fun setUp() {
+        stopKoin()
         dataSource = FakeDataSource()
         viewModel = SaveReminderViewModel(ApplicationProvider.getApplicationContext(), dataSource)
     }
@@ -55,6 +57,15 @@ class SaveReminderViewModelTest {
         assertEquals(true, viewModel.showLoading.getOrAwaitValue())
         mainCoroutineRule.resumeDispatcher()
         assertEquals(false, viewModel.showLoading.getOrAwaitValue())
-
     }
+
+    @Test
+    fun onSaveReminder_toastShown() {
+        val reminder = ReminderDataItem("title", "description", "location", 1.1, 1.1)
+        viewModel.validateAndSaveReminder(reminder)
+        val toastShown = viewModel.showToast.getOrAwaitValue()
+        assertEquals("Reminder Saved !", toastShown)
+    }
+
+
 }

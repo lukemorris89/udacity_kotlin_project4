@@ -117,6 +117,10 @@ class RemindersActivityTest :
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
 
         onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.reminderTitle)).perform(
+            ViewActions.typeText("TestReminder"),
+            ViewActions.closeSoftKeyboard()
+        )
         onView(withId(R.id.saveReminder)).perform(click())
 
         onView(withText("Please select location")).check(matches(isDisplayed()))

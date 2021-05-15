@@ -23,11 +23,19 @@ import com.udacity.project4.locationreminders.RemindersActivity
 class AuthenticationActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAuthenticationBinding
-    private lateinit var gso: GoogleSignInOptions
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_authentication)
+
+        val auth = FirebaseAuth.getInstance();
+
+        if (auth.currentUser != null) {
+            // User is signed in (getCurrentUser() will be null if not signed in)
+            val intent = Intent(this, RemindersActivity::class.java);
+            startActivity(intent);
+            finish();
+        }
 
         binding.loginButton.setOnClickListener {
             createSignInIntent()
@@ -75,6 +83,7 @@ class AuthenticationActivity : AppCompatActivity() {
     private fun signIn() {
         val intent = Intent(this, RemindersActivity::class.java)
         startActivity(intent)
+        finish()
     }
 
 
